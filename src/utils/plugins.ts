@@ -82,6 +82,7 @@ export interface ES5ArrayState extends ES5BaseState {
 	draft_: Drafted<AnyObject, ES5ArrayState>
 	base_: any
 	copy_: any
+	oldIndexes_: number[]
 }
 
 /** Map / Set plugin */

@@ -62,9 +62,11 @@ export type Immutable<T> = T extends PrimitiveType
 	: T
 
 export interface Patch {
-	op: "replace" | "remove" | "add"
+	op: "replace" | "remove" | "add" | "resortArray"
 	path: (string | number)[]
 	value?: any
+	/** for resortArray */
+	indexes?: any[]
 }
 
 export type PatchListener = (patches: Patch[], inversePatches: Patch[]) => void

@@ -39,7 +39,8 @@ const errors = {
 	23(thing: string) {
 		return `'original' expects a draft, got: ${thing}`
 	},
-	24: "Patching reserved attributes like __proto__, prototype and constructor is not allowed"
+	24: "Patching reserved attributes like __proto__, prototype and constructor is not allowed",
+	25: "Array Patches can only be applied to arrays"
 } as const
 
 export function die(error: keyof typeof errors, ...args: any[]): never {

@@ -1,5 +1,9 @@
 {
-  "name": "immer",
+  "name": "@lyonbot/immer",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "version": "9.0.0-beta.1",
   "description": "Create your next immutable state by mutating the current one",
   "main": "dist/index.js",

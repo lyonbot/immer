@@ -1,5 +1,7 @@
 <img src="images/immer-logo.svg" height="200px" align="right"/>
 
+> This is a modified version. Read [MODIFIED.md](./MODIFIED.md) to learn what changed.
+
 # Immer
 
 [![npm](https://img.shields.io/npm/v/immer.svg)](https://www.npmjs.com/package/immer) [![Build Status](https://travis-ci.org/immerjs/immer.svg?branch=master)](https://travis-ci.org/immerjs/immer) [![Coverage Status](https://coveralls.io/repos/github/mweststrate/immer/badge.svg?branch=master)](https://coveralls.io/github/mweststrate/immer?branch=master) [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)](https://github.com/prettier/prettier) [![OpenCollective](https://opencollective.com/immer/backers/badge.svg)](#backers) [![OpenCollective](https://opencollective.com/immer/sponsors/badge.svg)](#sponsors) [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/immerjs/immer)
