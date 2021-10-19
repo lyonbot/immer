@@ -53,6 +53,8 @@ The following array operations are handled:
 - sort
 - reverse
 
+NOTE: ES5 is not supported yet.
+
 ### More Complex Example
 
 If the array contains object, the algorithm will reuse existing elements as much as possible:
