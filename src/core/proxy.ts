@@ -229,7 +229,8 @@ each(objectTraps, (key, fn) => {
 	}
 })
 arrayTraps.get = function(state, prop, draft) {
-	let proxiedMutator = getProxiedArrayMutator(state[0], prop, draft)
+	let proxiedMutator =
+		typeof prop === "string" && getProxiedArrayMutator(state[0], prop, draft)
 	if (proxiedMutator) return proxiedMutator
 
 	return objectTraps.get!.call(this, state[0], prop, draft)

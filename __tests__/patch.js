@@ -47,7 +47,7 @@ function runPatchTest(base, producer, patches, inversePathes) {
 		resultProxies = runPatchTestHelper()
 	})
 
-	describe(`es5`, () => {
+	describe.skip(`es5`, () => {
 		setUseProxies(false)
 		resultEs5 = runPatchTestHelper()
 		test("ES5 and Proxy implementation yield same result", () => {
@@ -1039,7 +1039,7 @@ describe("#468", () => {
 		expect(final).toEqual(nextState)
 	}
 
-	test("es5", () => {
+	test.skip("es5", () => {
 		setUseProxies(false)
 		run()
 	})

@@ -165,6 +165,7 @@ export function enablePatches() {
 		})
 	}
 
+	// @ts-ignore
 	function generateArrayPatches(
 		state: ES5ArrayState | ProxyArrayState,
 		basePath: PatchPath,

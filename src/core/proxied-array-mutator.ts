@@ -76,7 +76,7 @@ const defaultArrayCompareFn = (x: any, y: any) => {
 
 export function getProxiedArrayMutator(
 	state: ProxyArrayState,
-	prop: string | symbol,
+	prop: string,
 	draft: any
 ) {
 	// if the proxied mutator is invoking,

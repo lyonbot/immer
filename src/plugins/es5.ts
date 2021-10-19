@@ -80,7 +80,7 @@ export function enableES5() {
 			assigned_: {},
 			// Track each item's old indexes. Will be reset to -1 if assigned / spliced
 			oldIndexes_: isArray
-				? Array.from({length: (base as any[]).length}, (_, i) => i)
+				? Array.from({length: ((base as unknown) as any[]).length}, (_, i) => i)
 				: undefined,
 			parent_: parent,
 			// base is the object we are drafting
