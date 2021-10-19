@@ -17,6 +17,7 @@ import {
 	createProxy,
 	ProxyType
 } from "../internal"
+import {getProxiedArrayMutator} from "./proxied-array-mutator"
 
 interface ProxyBaseState extends ImmerBaseState {
 	assigned_: {
@@ -38,9 +39,12 @@ export interface ProxyArrayState extends ProxyBaseState {
 	base_: AnyArray
 	copy_: AnyArray | null
 	draft_: Drafted<AnyArray, ProxyArrayState>
+	isMutatingArray_: boolean // true if an array mutation is in progress
+	oldItemIndexes_: Map<any, number>
+	oldIndexes_: number[]
 }
 
-type ProxyState = ProxyObjectState | ProxyArrayState
+export type ProxyState = ProxyObjectState | ProxyArrayState
 
 /**
  * Returns a new draft of the `base` object.
@@ -62,6 +66,10 @@ export function createProxyProxy<T extends Objectish>(
 		finalized_: false,
 		// Track which properties have been assigned (true) or deleted (false).
 		assigned_: {},
+		// Track each item's old indexes. Will be reset to -1 if assigned / spliced
+		oldIndexes_: isArray
+			? Array.from({length: (base as any[]).length}, (_, i) => i)
+			: undefined,
 		// The parent draft state.
 		parent_: parent,
 		// The base state.
@@ -221,12 +229,24 @@ each(objectTraps, (key, fn) => {
 		return fn.apply(this, arguments)
 	}
 })
+arrayTraps.get = function(state, prop, draft) {
+	let proxiedMutator = getProxiedArrayMutator(state[0], prop, draft)
+	if (proxiedMutator) return proxiedMutator
+
+	return objectTraps.get!.call(this, state[0], prop, draft)
+}
 arrayTraps.deleteProperty = function(state, prop) {
 	if (__DEV__ && isNaN(parseInt(prop as any))) die(13)
 	return objectTraps.deleteProperty!.call(this, state[0], prop)
 }
 arrayTraps.set = function(state, prop, value) {
-	if (__DEV__ && prop !== "length" && isNaN(parseInt(prop as any))) die(14)
+	const propIsNum = !isNaN(parseInt(prop as any))
+	if (__DEV__ && prop !== "length" && !propIsNum) die(14)
+	if (!state[0].isMutatingArray_ && propIsNum) {
+		// for array, the proxied mutator should update oldIndexes_
+		// but if user is directly assigning, we reset item'soldIndex
+		state[0]!.oldIndexes_[(prop as unknown) as number] = -1
+	}
 	return objectTraps.set!.call(this, state[0], prop, value, state[0])
 }
 
@@ -276,4 +296,15 @@ export function prepareCopy(state: {base_: any; copy_: any}) {
 	if (!state.copy_) {
 		state.copy_ = shallowCopy(state.base_)
 	}
+}
+
+export function getOldItemIndexes(state: ProxyArrayState) {
+	if (state.oldItemIndexes_) return state.oldItemIndexes_
+
+	const lut = new Map<any, number>()
+	Array.prototype.forEach.call(state.base_, (item, index) => {
+		if (typeof item === "object" && item !== null) lut.set(item, index)
+	})
+	state.oldItemIndexes_ = lut
+	return lut
 }

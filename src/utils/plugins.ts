@@ -20,6 +20,12 @@ const plugins: {
 			patches: Patch[],
 			inversePatches: Patch[]
 		): void
+		generatePatchesBeforeProperties_(
+			state: ImmerState,
+			basePath: PatchPath,
+			patches: Patch[],
+			inversePatches: Patch[]
+		): void
 		generateReplacementPatches_(
 			rootState: ImmerState,
 			replacement: any,

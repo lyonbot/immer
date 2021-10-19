@@ -85,6 +85,15 @@ function finalize(rootScope: ImmerScope, value: any, path?: PatchPath) {
 			state.type_ === ProxyType.ES5Object || state.type_ === ProxyType.ES5Array
 				? (state.copy_ = shallowCopy(state.draft_))
 				: state.copy_
+
+		if (path && rootScope.patches_) {
+			getPlugin("Patches").generatePatchesBeforeProperties_(
+				state,
+				path,
+				rootScope.patches_,
+				rootScope.inversePatches_!
+			)
+		}
 		// Finalize all children of the copy
 		// For sets we clone before iterating, otherwise we can get in endless loop due to modifying during iteration, see #628
 		// Although the original test case doesn't seem valid anyway, so if this in the way we can turn the next line
@@ -119,13 +128,28 @@ function finalizeProperty(
 ) {
 	if (__DEV__ && childValue === targetObject) die(5)
 	if (isDraft(childValue)) {
-		const path =
+		let path: PatchPath | undefined
+		if (
 			rootPath &&
 			parentState &&
-			parentState!.type_ !== ProxyType.Set && // Set objects are atomic since they have no keys.
-			!has((parentState as Exclude<ImmerState, SetState>).assigned_!, prop) // Skip deep patches for assigned keys.
-				? rootPath!.concat(prop)
-				: undefined
+			parentState!.type_ !== ProxyType.Set // Set objects are atomic since they have no keys.
+		) {
+			if (
+				parentState!.type_ === ProxyType.ProxyArray ||
+				parentState!.type_ === ProxyType.ES5Array
+			) {
+				// reused items of array
+				// items' patches are applied before resortArray (however, in inversePatches, they are AFTER resortArray!), so we use old path here
+				const oldIndex = parentState.oldIndexes_[(prop as unknown) as number]
+				if (oldIndex >= 0) path = rootPath.concat(oldIndex)
+			} else {
+				// object or map, skip deep patches for assigned keys.
+				if (
+					!has((parentState as Exclude<ImmerState, SetState>).assigned_!, prop)
+				)
+					path = rootPath.concat(prop)
+			}
+		}
 		// Drafts owned by `scope` are finalized here.
 		const res = finalize(rootScope, childValue, path)
 		set(targetObject, prop, res)

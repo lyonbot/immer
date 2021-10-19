@@ -28,6 +28,7 @@ export function enablePatches() {
 	const REPLACE = "replace"
 	const ADD = "add"
 	const REMOVE = "remove"
+	const RESORT_ARRAY = "resortArray"
 
 	function generatePatches_(
 		state: ImmerState,
@@ -47,7 +48,7 @@ export function enablePatches() {
 				)
 			case ProxyType.ES5Array:
 			case ProxyType.ProxyArray:
-				return generateArrayPatches(state, basePath, patches, inversePatches)
+				return generateArrayPatchesWithResortArray(state, basePath, patches)
 			case ProxyType.Set:
 				return generateSetPatches(
 					(state as any) as SetState,
@@ -56,6 +57,90 @@ export function enablePatches() {
 					inversePatches
 				)
 		}
+	}
+
+	function generateArrayPatchesWithResortArray(
+		state: ES5ArrayState | ProxyArrayState,
+		basePath: PatchPath,
+		patches: Patch[]
+	) {
+		const {base_} = state // we do not need assigned_
+		const copy_ = state.copy_!
+
+		const indexes = state.oldIndexes_.slice()
+		const indexesUnchanged =
+			indexes.length === base_.length &&
+			indexes.every((n, o) => n === -1 || n === o)
+		if (!indexesUnchanged) {
+			patches.push({
+				op: "resortArray",
+				path: basePath.concat([]),
+				indexes: indexes
+			})
+		}
+
+		indexes.forEach((n, o) => {
+			if (n !== -1) return
+			patches.push({
+				op: REPLACE,
+				path: basePath.concat([o]),
+				value: clonePatchValueIfNeeded(copy_[o])
+			})
+		})
+	}
+
+	function generatePatchesBeforeProperties_(
+		state: ImmerState,
+		basePath: PatchPath,
+		patches: Patch[],
+		inversePatches: Patch[]
+	): void {
+		switch (state.type_) {
+			case ProxyType.ES5Array:
+			case ProxyType.ProxyArray:
+				return generateArrayInversePatchesWithResortArray(
+					state,
+					basePath,
+					inversePatches
+				)
+		}
+	}
+
+	function generateArrayInversePatchesWithResortArray(
+		state: ES5ArrayState | ProxyArrayState,
+		basePath: PatchPath,
+		inversePatches: Patch[]
+	) {
+		const {base_} = state // we do not need assigned_
+
+		const indexes = state.oldIndexes_.slice()
+		const indexesForInverse: number[] = Array.from(
+			{length: base_.length},
+			() => -1
+		)
+		indexes.forEach((n, o) => {
+			if (n !== -1) indexesForInverse[n] = o
+		})
+
+		const indexesUnchanged =
+			indexes.length === base_.length &&
+			indexes.every((n, o) => n === -1 || n === o)
+		if (!indexesUnchanged) {
+			inversePatches.push({
+				op: "resortArray",
+				path: basePath.concat([]),
+				indexes: indexesForInverse
+			})
+		}
+
+		indexesForInverse.forEach((n, o) => {
+			if (n !== -1) return
+			inversePatches.push({
+				op: REPLACE,
+				path: basePath.concat([o]),
+				value: clonePatchValueIfNeeded(base_[o])
+			})
+		})
 	}
 
 	function generateArrayPatches(
@@ -259,6 +344,14 @@ export function enablePatches() {
 						default:
 							return delete base[key]
 					}
+				case RESORT_ARRAY: {
+					const current = base[key]
+					if (getArchtype(current) !== Archtype.Array) die(25)
+					base[key] = patch.indexes!.map(i =>
+						i === -1 ? undefined : current[i]
+					)
+					return
+				}
 				default:
 					die(17, op)
 			}
@@ -294,6 +387,7 @@ export function enablePatches() {
 	loadPlugin("Patches", {
 		applyPatches_,
 		generatePatches_,
+		generatePatchesBeforeProperties_,
 		generateReplacementPatches_
 	})
 }
