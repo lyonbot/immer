@@ -32,4 +32,4 @@ Did Immer make a difference to your project? Join the open collective at https:/
 
 ## Release notes
 
-https://github.com/immerjs/immer/releases
+https://github.com/lyonbot/immer/releases
