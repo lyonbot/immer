@@ -78,6 +78,10 @@ export function enableES5() {
 			modified_: false,
 			finalized_: false,
 			assigned_: {},
+			// Track each item's old indexes. Will be reset to -1 if assigned / spliced
+			oldIndexes_: isArray
+				? Array.from({length: (base as any[]).length}, (_, i) => i)
+				: undefined,
 			parent_: parent,
 			// base is the object we are drafting
 			base_: base,
@@ -118,8 +122,11 @@ export function enableES5() {
 					return objectTraps.get(state, prop)
 				},
 				set(this: any, value) {
-					const state = this[DRAFT_STATE]
+					// FIXME: not finished.
+					const state = this[DRAFT_STATE] as ES5State
 					if (__DEV__) assertUnrevoked(state)
+					if (state.type_ === ProxyType.ES5Array && !isNaN(+prop))
+						state.oldIndexes_[+prop] = -1
 					// @ts-ignore
 					objectTraps.set(state, prop, value)
 				}

@@ -1,11 +1,4 @@
-import {DRAFT_STATE} from "../internal"
-import {
-	ProxyArrayState,
-	ProxyState,
-	prepareCopy,
-	markChanged,
-	getOldItemIndexes
-} from "./proxy"
+import {ProxyArrayState, prepareCopy, markChanged} from "./proxy"
 
 type ProxiedArrayMutator<T extends keyof any[]> = (
 	proxiedArray: any[],
@@ -21,24 +14,11 @@ type ArrayMutatorName =
 	| "sort"
 	| "reverse"
 
-const findOldIndex = (
-	arrayState: ProxyArrayState,
-	draftOrValue: any
-): number => {
-	if (typeof draftOrValue !== "object" || !draftOrValue) return -1
-
-	let originalItem = draftOrValue
-	let draftState = draftOrValue[DRAFT_STATE] as ProxyState | undefined
-	if (draftState) originalItem = draftState.base_
-
-	return getOldItemIndexes(arrayState).get(originalItem) ?? -1
-}
-
 const arrayMutators: {
 	[k in ArrayMutatorName]: ProxiedArrayMutator<k>
 } = {
 	push: (array, indexes, state) => (...items) => {
-		indexes.push(...items.map(x => findOldIndex(state, x)))
+		indexes.push(...items.map(x => -1))
 		return array.push(...items)
 	},
 	pop: (array, indexes) => () => {
@@ -46,7 +26,7 @@ const arrayMutators: {
 		return array.pop()
 	},
 	unshift: (array, indexes, state) => (...items) => {
-		indexes.unshift(...items.map(x => findOldIndex(state, x)))
+		indexes.unshift(...items.map(x => -1))
 		return array.unshift(...items)
 	},
 	shift: (array, indexes) => () => {
@@ -58,11 +38,7 @@ const arrayMutators: {
 		deleteCount = array.length - index,
 		...items: any[]
 	) => {
-		indexes.splice(
-			index,
-			deleteCount,
-			...items.map(x => findOldIndex(state, x))
-		)
+		indexes.splice(index, deleteCount, ...items.map(x => -1))
 		return array.splice(index, deleteCount, ...items)
 	},
 	reverse: (array, indexes) => () => {
@@ -107,7 +83,7 @@ export function getProxiedArrayMutator(
 	// `getProxiedArrayMutator` might be called again and we shall return the original method
 	if (state.isMutatingArray_) return null
 
-	if (!(prop in arrayMutators)) return null
+	if (!Object.hasOwnProperty.call(arrayMutators, prop)) return null
 
 	// hijack regular array mutating functions
 	const fnFactory = arrayMutators[prop as ArrayMutatorName]

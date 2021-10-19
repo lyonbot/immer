@@ -40,11 +40,10 @@ export interface ProxyArrayState extends ProxyBaseState {
 	copy_: AnyArray | null
 	draft_: Drafted<AnyArray, ProxyArrayState>
 	isMutatingArray_: boolean // true if an array mutation is in progress
-	oldItemIndexes_: Map<any, number>
 	oldIndexes_: number[]
 }
 
-export type ProxyState = ProxyObjectState | ProxyArrayState
+type ProxyState = ProxyObjectState | ProxyArrayState
 
 /**
  * Returns a new draft of the `base` object.
@@ -242,10 +241,22 @@ arrayTraps.deleteProperty = function(state, prop) {
 arrayTraps.set = function(state, prop, value) {
 	const propIsNum = !isNaN(parseInt(prop as any))
 	if (__DEV__ && prop !== "length" && !propIsNum) die(14)
-	if (!state[0].isMutatingArray_ && propIsNum) {
+	if (!state[0].isMutatingArray_) {
+		const oldIndexes = state[0]!.oldIndexes_
 		// for array, the proxied mutator should update oldIndexes_
-		// but if user is directly assigning, we reset item'soldIndex
-		state[0]!.oldIndexes_[(prop as unknown) as number] = -1
+		// but if user is directly assigning, we reset item's oldIndex
+		if (propIsNum) {
+			const index = Number(prop)
+			while (oldIndexes.length <= index) oldIndexes.push(-1)
+			oldIndexes[index] = -1
+		} else if (prop === "length") {
+			// array length changed
+			if (value < oldIndexes.length) oldIndexes.splice(value)
+			if (value > oldIndexes.length)
+				oldIndexes.push(
+					...Array.from({length: value - oldIndexes.length}, () => -1)
+				)
+		}
 	}
 	return objectTraps.set!.call(this, state[0], prop, value, state[0])
 }
@@ -296,15 +307,4 @@ export function prepareCopy(state: {base_: any; copy_: any}) {
 	if (!state.copy_) {
 		state.copy_ = shallowCopy(state.base_)
 	}
-}
-
-export function getOldItemIndexes(state: ProxyArrayState) {
-	if (state.oldItemIndexes_) return state.oldItemIndexes_
-
-	const lut = new Map<any, number>()
-	Array.prototype.forEach.call(state.base_, (item, index) => {
-		if (typeof item === "object" && item !== null) lut.set(item, index)
-	})
-	state.oldItemIndexes_ = lut
-	return lut
 }

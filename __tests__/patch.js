@@ -516,10 +516,8 @@ describe("arrays - prepend", () => {
 			d.x.unshift(4)
 		},
 		[
-			{op: "replace", path: ["x", 0], value: 4},
-			{op: "replace", path: ["x", 1], value: 1},
-			{op: "replace", path: ["x", 2], value: 2},
-			{op: "add", path: ["x", 3], value: 3}
+			{op: "resortArray", path: ["x"], indexes: [-1, 0, 1, 2]},
+			{op: "replace", path: ["x", 0], value: 4}
 		]
 	)
 })
@@ -533,11 +531,9 @@ describe("arrays - multiple prepend", () => {
 			// 4,5,1,2,3
 		},
 		[
+			{op: "resortArray", path: ["x"], indexes: [-1, -1, 0, 1, 2]},
 			{op: "replace", path: ["x", 0], value: 5},
-			{op: "replace", path: ["x", 1], value: 4},
-			{op: "replace", path: ["x", 2], value: 1},
-			{op: "add", path: ["x", 3], value: 2},
-			{op: "add", path: ["x", 4], value: 3}
+			{op: "replace", path: ["x", 1], value: 4}
 		]
 	)
 })
@@ -548,10 +544,7 @@ describe("arrays - splice middle", () => {
 		d => {
 			d.x.splice(1, 1)
 		},
-		[
-			{op: "replace", path: ["x", 1], value: 3},
-			{op: "replace", path: ["x", "length"], value: 2}
-		]
+		[{op: "resortArray", path: ["x"], indexes: [0, 2]}]
 	)
 })
 
@@ -566,10 +559,9 @@ describe("arrays - multiple splice", () => {
 			expect(d.slice()).toEqual([0, 3, 3, 3, 0])
 		},
 		[
+			{op: "resortArray", path: [], indexes: [0, -1, 3, -1, 6]},
 			{op: "replace", path: [1], value: 3},
-			{op: "replace", path: [2], value: 3},
-			{op: "replace", path: [4], value: 0},
-			{op: "replace", path: ["length"], value: 5}
+			{op: "replace", path: [3], value: 3}
 		]
 	)
 })
@@ -583,12 +575,13 @@ describe("arrays - modify and shrink", () => {
 			// [0, 2]
 		},
 		[
-			{op: "replace", path: ["x", 0], value: 4},
-			{op: "replace", path: ["x", "length"], value: 2}
+			{op: "resortArray", path: ["x"], indexes: [-1, 1]},
+			{op: "replace", path: ["x", 0], value: 4}
 		],
 		[
+			{op: "resortArray", path: ["x"], indexes: [-1, 1, -1]},
 			{op: "replace", path: ["x", 0], value: 1},
-			{op: "add", path: ["x", 2], value: 3}
+			{op: "replace", path: ["x", 2], value: 3}
 		]
 	)
 })
@@ -602,8 +595,8 @@ describe("arrays - prepend then splice middle", () => {
 			// 4, 1, 3
 		},
 		[
-			{op: "replace", path: ["x", 0], value: 4},
-			{op: "replace", path: ["x", 1], value: 1}
+			{op: "resortArray", path: ["x"], indexes: [-1, 0, 2]},
+			{op: "replace", path: ["x", 0], value: 4}
 		]
 	)
 })
@@ -617,8 +610,8 @@ describe("arrays - splice middle then prepend", () => {
 			// [4, 1, 3]
 		},
 		[
-			{op: "replace", path: ["x", 0], value: 4},
-			{op: "replace", path: ["x", 1], value: 1}
+			{op: "resortArray", path: ["x"], indexes: [-1, 0, 2]},
+			{op: "replace", path: ["x", 0], value: 4}
 		]
 	)
 })
@@ -629,10 +622,11 @@ describe("arrays - truncate", () => {
 		d => {
 			d.x.length -= 2
 		},
-		[{op: "replace", path: ["x", "length"], value: 1}],
+		[{op: "resortArray", path: ["x"], indexes: [0]}],
 		[
-			{op: "add", path: ["x", 1], value: 2},
-			{op: "add", path: ["x", 2], value: 3}
+			{op: "resortArray", path: ["x"], indexes: [0, -1, -1]},
+			{op: "replace", path: ["x", 1], value: 2},
+			{op: "replace", path: ["x", 2], value: 3}
 		]
 	)
 })
@@ -644,7 +638,7 @@ describe("arrays - pop twice", () => {
 			d.x.pop()
 			d.x.pop()
 		},
-		[{op: "replace", path: ["x", "length"], value: 1}]
+		[{op: "resortArray", path: ["x"], indexes: [0]}]
 	)
 })
 
@@ -656,10 +650,11 @@ describe("arrays - push multiple", () => {
 			d.x.push(4, 5)
 		},
 		[
-			{op: "add", path: ["x", 3], value: 4},
-			{op: "add", path: ["x", 4], value: 5}
+			{op: "resortArray", path: ["x"], indexes: [0, 1, 2, -1, -1]},
+			{op: "replace", path: ["x", 3], value: 4},
+			{op: "replace", path: ["x", 4], value: 5}
 		],
-		[{op: "replace", path: ["x", "length"], value: 3}]
+		[{op: "resortArray", path: ["x"], indexes: [0, 1, 2]}]
 	)
 })
 
@@ -671,15 +666,14 @@ describe("arrays - splice (expand)", () => {
 			d.x.splice(1, 1, 4, 5, 6) // [1,4,5,6,3]
 		},
 		[
+			{op: "resortArray", path: ["x"], indexes: [0, -1, -1, -1, 2]},
 			{op: "replace", path: ["x", 1], value: 4},
 			{op: "replace", path: ["x", 2], value: 5},
-			{op: "add", path: ["x", 3], value: 6},
-			{op: "add", path: ["x", 4], value: 3}
+			{op: "replace", path: ["x", 3], value: 6}
 		],
 		[
-			{op: "replace", path: ["x", 1], value: 2},
-			{op: "replace", path: ["x", 2], value: 3},
-			{op: "replace", path: ["x", "length"], value: 3}
+			{op: "resortArray", path: ["x"], indexes: [0, -1, 4]},
+			{op: "replace", path: ["x", 1], value: 2}
 		]
 	)
 })
@@ -692,15 +686,14 @@ describe("arrays - splice (shrink)", () => {
 			d.x.splice(1, 3, 6) // [1, 6, 5]
 		},
 		[
-			{op: "replace", path: ["x", 1], value: 6},
-			{op: "replace", path: ["x", 2], value: 5},
-			{op: "replace", path: ["x", "length"], value: 3}
+			{op: "resortArray", path: ["x"], indexes: [0, -1, 4]},
+			{op: "replace", path: ["x", 1], value: 6}
 		],
 		[
+			{op: "resortArray", path: ["x"], indexes: [0, -1, -1, -1, 2]},
 			{op: "replace", path: ["x", 1], value: 2},
 			{op: "replace", path: ["x", 2], value: 3},
-			{op: "add", path: ["x", 3], value: 4},
-			{op: "add", path: ["x", 4], value: 5}
+			{op: "replace", path: ["x", 3], value: 4}
 		]
 	)
 })
@@ -789,27 +782,33 @@ describe("sets - mutate - 1", () => {
 	)
 })
 
-describe("arrays - splice should should result in remove op.", () => {
+describe("arrays - splice should should result in resortArray op.", () => {
 	// These patches were more optimal pre immer 7, but not always correct
 	runPatchTest(
 		[1, 2],
 		d => {
 			d.splice(1, 1)
 		},
-		[{op: "replace", path: ["length"], value: 1}],
-		[{op: "add", path: [1], value: 2}]
+		[{op: "resortArray", path: [], indexes: [0]}],
+		[
+			{op: "resortArray", path: [], indexes: [0, -1]},
+			{op: "replace", path: [1], value: 2}
+		]
 	)
 })
 
-describe("arrays - NESTED splice should should result in remove op.", () => {
+describe("arrays - NESTED splice should should result in resortArray op.", () => {
 	// These patches were more optimal pre immer 7, but not always correct
 	runPatchTest(
 		{a: {b: {c: [1, 2]}}},
 		d => {
 			d.a.b.c.splice(1, 1)
 		},
-		[{op: "replace", path: ["a", "b", "c", "length"], value: 1}],
-		[{op: "add", path: ["a", "b", "c", 1], value: 2}]
+		[{op: "resortArray", path: ["a", "b", "c"], indexes: [0]}],
+		[
+			{op: "resortArray", path: ["a", "b", "c"], indexes: [0, -1]},
+			{op: "replace", path: ["a", "b", "c", 1], value: 2}
+		]
 	)
 })
 
@@ -1023,7 +1022,12 @@ describe("#468", () => {
 				value: 2
 			},
 			{
-				op: "add",
+				indexes: [0, -1],
+				op: "resortArray",
+				path: []
+			},
+			{
+				op: "replace",
 				path: [1],
 				value: {
 					id: 1
@@ -1086,7 +1090,8 @@ test("#559 patches works in a nested reducer with proxies", () => {
 			},
 			(patches, inversePatches) => {
 				expect(isDraft(inversePatches[0].value)).toBeFalsy()
-				expect(inversePatches[0].value).toMatchObject({a: 1})
+				expect(inversePatches[0].op).toEqual("resortArray")
+				expect(inversePatches[1].value).toMatchObject({a: 1})
 				changes.push(...patches)
 				inverseChanges.push(...inversePatches)
 			}

@@ -21,7 +21,8 @@ import {
 	die,
 	isDraft,
 	isDraftable,
-	NOTHING
+	NOTHING,
+	DRAFT_STATE
 } from "../internal"
 
 export function enablePatches() {
@@ -111,7 +112,28 @@ export function enablePatches() {
 		basePath: PatchPath,
 		inversePatches: Patch[]
 	) {
-		const {base_} = state // we do not need assigned_
+		const {base_, copy_} = state // we do not need assigned_
+
+		// IMPORTANT! some -1 oldIndexes_ can be recovered, if it is an object
+		const oldObjIndexLUT = new Map(
+			(base_ as any[])
+				.map((item, index) => [item, index] as [object, number])
+				.filter(x => typeof x[0] === "object" && !!x[0])
+		)
+		state.oldIndexes_.forEach((o, i) => {
+			if (o !== -1) return
+
+			type State =
+				| ES5ArrayState
+				| ES5ObjectState
+				| ProxyArrayState
+				| ProxyObjectState
+			const baseOfNewItem = (copy_[i]?.[DRAFT_STATE as any] as State)?.base_
+			if (!oldObjIndexLUT.has(baseOfNewItem)) return
+
+			state.oldIndexes_[i] = oldObjIndexLUT.get(baseOfNewItem)!
+			oldObjIndexLUT.delete(baseOfNewItem)
+		})
 
 		const indexes = state.oldIndexes_.slice()
 		const indexesForInverse: number[] = Array.from(
@@ -345,11 +367,13 @@ export function enablePatches() {
 							return delete base[key]
 					}
 				case RESORT_ARRAY: {
-					const current = base[key]
-					if (getArchtype(current) !== Archtype.Array) die(25)
-					base[key] = patch.indexes!.map(i =>
+					const current = path.length === 0 ? base : base[key]
+					if (!Array.isArray(current)) die(25)
+
+					const newArray = patch.indexes!.map(i =>
 						i === -1 ? undefined : current[i]
 					)
+					current.splice(0, current.length, ...newArray)
 					return
 				}
 				default:
