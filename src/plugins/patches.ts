@@ -114,11 +114,17 @@ export function enablePatches() {
 	) {
 		const {base_, copy_} = state // we do not need assigned_
 
-		// IMPORTANT! some -1 oldIndexes_ can be recovered, if it is an object
+		// this is a { not-reused-object => oldIndex } LUT
+		// some "-1" of oldIndexes_ can be recovered
 		const oldObjIndexLUT = new Map(
 			(base_ as any[])
 				.map((item, index) => [item, index] as [object, number])
-				.filter(x => typeof x[0] === "object" && !!x[0])
+				.filter(
+					x =>
+						typeof x[0] === "object" &&
+						!!x[0] &&
+						!state.oldIndexes_.includes(x[1])
+				)
 		)
 		state.oldIndexes_.forEach((o, i) => {
 			if (o !== -1) return
@@ -128,7 +134,8 @@ export function enablePatches() {
 				| ES5ObjectState
 				| ProxyArrayState
 				| ProxyObjectState
-			const baseOfNewItem = (copy_[i]?.[DRAFT_STATE as any] as State)?.base_
+			const baseOfNewItem =
+				(copy_[i]?.[DRAFT_STATE as any] as State)?.base_ ?? copy_[i]
 			if (!oldObjIndexLUT.has(baseOfNewItem)) return
 
 			state.oldIndexes_[i] = oldObjIndexLUT.get(baseOfNewItem)!
