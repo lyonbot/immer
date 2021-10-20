@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org"
   },
-  "version": "9.0.2",
+  "version": "9.0.3",
   "description": "Create your next immutable state by mutating the current one",
   "main": "dist/index.js",
   "module": "dist/immer.esm.js",
