@@ -2,6 +2,29 @@
 
 This is a fork of [immerjs/immer](https://github.com/immerjs/immer), with these changes:
 
+## `onceDraftModified`
+
+This package exports the `onceDraftModified` method. Once a draft and its **(deeply) nested** draft has been modified, callbacks will be called.
+
+If the draft is already modified, the callback will be called immediately.
+
+```js
+const draft = createDraft({a: 1234})
+const callback = iDraft => {
+	console.log("modified", iDraft) // iDraft is always draft
+}
+
+onceDraftModified(draft, callback)
+
+draft.a = 5678 // trigger!
+
+draft.a = 9999 // no trigger because already modified once.
+
+onceDraftModified(draft, callback) // trigger immediately because draft has already been modified
+
+draft.a = 333 // no trigger because already modified once.
+```
+
 ## Patches of Array Operations
 
 In the original version, array operations yield lots of patches:

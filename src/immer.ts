@@ -15,6 +15,7 @@ export {
 	current,
 	isDraft,
 	isDraftable,
+	onceDraftModified,
 	NOTHING as nothing,
 	DRAFTABLE as immerable,
 	freeze

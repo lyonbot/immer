@@ -301,6 +301,11 @@ export function markChanged(state: ImmerState) {
 		if (state.parent_) {
 			markChanged(state.parent_)
 		}
+
+		if (state.onModifiedCallbacks_) {
+			state.onModifiedCallbacks_.forEach(fn => fn(state.draft_))
+			state.onModifiedCallbacks_ = void 0
+		}
 	}
 }
 

@@ -39,6 +39,7 @@ export interface ImmerBaseState {
 	modified_: boolean
 	finalized_: boolean
 	isManual_: boolean
+	onModifiedCallbacks_?: Set<(draft: any) => void>
 }
 
 export type ImmerState =
